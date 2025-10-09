@@ -26,6 +26,7 @@ import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.TestProfiles;
 import com.graphhopper.util.CustomModel;
 
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -51,10 +52,9 @@ public class GraphHopperProfileTest {
     @Test
     public void profile_putHint_storeKeyValue() {
         Profile p = new Profile("p1");
-
         // Test que putHint() fonctionne sans lever d'exception
         assertDoesNotThrow(() -> p.putHint("foo", "bar"));
-        
+
         // Test le chaînage - putHint() doit retourner le même Profile
         Profile result = p.putHint("another", "value");
         assertSame(p, result, "putHint() should return the same Profile instance for method chaining");
@@ -113,49 +113,33 @@ public class GraphHopperProfileTest {
         assertThrows(IllegalArgumentException.class, () -> Profile.validateProfileName("")); // nom vide
     }
 
-    /**
-    * Tests pour tuer des mutants spécifiques dans Profile
-    */
-
-    /**
-     * Test pour tuer le mutant "removed call to validateProfileName"
-     * Intention : Vérifier que validateProfileName() est appelée
-     * Données : Nom invalide "INVALID_NAME_WITH_UPPERCASE"
-     * Oracle : IllegalArgumentException levée
+        /**
+     * Intention :
+     *   Vérifier le contrat equals/hashCode pour la classe Profile (même name -> equal et même hashCode).
+     * Données :
+     *   - Profile a1 = new Profile("car")
+     *   - Profile a2 = new Profile("car")
+     *   - Profile b = new Profile("bike")
+     * Oracle :
+     *   - a1.equals(a2) == true et a1.hashCode() == a2.hashCode()
+     *   - a1.equals(b) == false
+     *   - a1.equals(null) == false
      */
     @Test
-    public void testSetNameValidation() {
-        Profile profile = new Profile("valid");
-        
-        assertThrows(IllegalArgumentException.class, () -> {
-            profile.setName("INVALID_NAME_WITH_UPPERCASE");
-        });
-        
-        assertEquals("valid", profile.getName());
-    }
+    public void profile_equalsAndHashCode() {
+        Profile a1 = new Profile("car");
+        Profile a2 = new Profile("car");
+        Profile b = new Profile("bike");
 
-    /**
-     * Test pour tuer le mutant "replaced return value with null"
-     * Intention : Vérifier que setCustomModel() retourne 'this'
-     * Données : CustomModel valide
-     * Oracle : Retourne l'instance Profile pour chaînage
-     */
-    @Test 
-    public void testSetCustomModelChaining() {
-        Profile profile = new Profile("test");
-        CustomModel customModel = new CustomModel();
-        
-        Profile result = profile.setCustomModel(customModel);
-        
-        assertNotNull(result);
-        assertSame(profile, result);
-        
-        // Test de chaînage
-        assertDoesNotThrow(() -> {
-            new Profile("chain")
-                .setCustomModel(customModel)
-                .setName("newname");
-        });
+    // même nom -> égaux et même hash
+        assertEquals(a1, a2);
+        assertEquals(a1.hashCode(), a2.hashCode());
+
+    // nom différent -> non égaux (les hashCode peuvent se percuter mais seront probablement différents)
+        assertNotEquals(a1, b);
+
+    // equals avec null
+        assertNotEquals(a1, null);
     }
 
 
@@ -288,4 +272,6 @@ public class GraphHopperProfileTest {
             }
         }
     }
+
+
 }

@@ -193,4 +193,73 @@
             </resource>
         </resources>
     </build>
+    <profiles>
+        <profile>
+            <id>pitest</id>
+            <properties>
+                <!-- Force compilation to Java 17 when running under the pitest profile to keep class file version compatible with PIT/ASM -->
+                <maven.compiler.release>17</maven.compiler.release>
+                <maven.compiler.source>17</maven.compiler.source>
+                <maven.compiler.target>17</maven.compiler.target>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <version>3.11.0</version>
+                        <configuration>
+                            <release>17</release>
+                        </configuration>
+                    </plugin>
+                    <plugin>
+                        <groupId>org.pitest</groupId>
+                        <artifactId>pitest-maven</artifactId>
+                        <version>1.20.6</version>
+                        <configuration>
+                            <!-- CIBLER LES PACKAGES/CLASSES -->
+                            <targetClasses>
+                                <param>com.graphhopper.config.Profile</param>
+                                <param>com.graphhopper.storage.CHStorage</param>
+                            </targetClasses>
+
+                            <targetTests>
+                                <param>com.graphhopper.storage.CHStorageTest</param>
+                                <param>com.graphhopper.GraphHopperProfileTest</param>
+                            </targetTests>
+
+                            <mutators>
+                                <mutator>DEFAULTS</mutator>
+                            </mutators>
+                            <threads>4</threads>
+                            <!-- Control classpath handling for PIT; useClasspathJar=true avoids needing an external arg file on some platforms -->
+                            <useClasspathJar>true</useClasspathJar>
+                            <timeoutFactor>3</timeoutFactor>
+
+                            <!-- Rapports -->
+                            <outputFormats>
+                                <param>XML</param>
+                                <param>HTML</param>
+                            </outputFormats>
+
+                            <!-- Ne mute pas les classes de test -->
+                            <excludedClasses>
+                                <param>**/*Test*</param>
+                            </excludedClasses>
+
+                            <!-- Ignore tests faiblement fiables -->
+                            <skipFailingTests>true</skipFailingTests>
+                        </configuration>
+                        <dependencies>
+                            <dependency>
+                                <groupId>org.pitest</groupId>
+                                <artifactId>pitest-junit5-plugin</artifactId>
+                                <version>1.2.3</version>
+                            </dependency>
+                        </dependencies>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 </project>

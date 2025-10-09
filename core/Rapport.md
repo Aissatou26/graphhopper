@@ -15,10 +15,9 @@ Le but de ce devoir est de sélectionner **1 à 3 classes** GraphHopper ayant un
 
 1. **[Profile](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/main/java/com/graphhopper/config/Profile.java)** - gère la configuration des profils de routage, 
 2. **[CHStorage](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/main/java/com/graphhopper/storage/CHStorage.java)** - optimise le stockage des raccourcis pour les performances,
-3. **[GraphHopper](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/main/java/com/graphhopper/GraphHopper.java)** - constitue le moteur principal de l'application.
 
 **Justification :** 
-Ces trois classes ont été sélectionnées car elles représentent les composants centraux de GraphHopper avec une logique métier critique..
+Ces deux classes ont été sélectionnées car elles représentent les composants centraux de GraphHopper avec une logique métier critique..
 Chacune possède déjà une couverture de test de base, ce qui permet d'identifier facilement les zones non testées et d'ajouter des cas de test pertinents pour améliorer le score de mutation.
 
 ## **3. Tests Créés**
@@ -52,17 +51,27 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 - **Données :** Noms valides (valid_name, test123, my-profile, a) et invalides (majuscules, espaces, caractères spéciaux)
 - **Oracle :** Aucune exception pour noms valides, IllegalArgumentException pour noms invalides
 
+#### **[Test 5 : profile_equalsAndHashCode](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L120)**
+- **Partie testée :** Contrat equals() / hashCode() pour la classe `Profile`
+- **Pourquoi :** S'assurer que deux Profile avec le même `name` sont considérés égaux et ont le même hashCode; vérifier aussi le comportement avec un autre nom et avec `null`.
+- **Données :** `Profile("car")`, `Profile("car")`, `Profile("bike")`
+- **Oracle :** Les deux profils avec le même nom sont égaux et leurs hashCodes sont identiques; profils différents ne sont pas égaux; comparaison avec `null` retourne `false`.
 
 **Résultats des tests :**
-- 4 tests passent avec succès
-- **Amélioration significative de la couverture putHint() :**
+- 5 tests passent avec succès
+- **Amélioration significative de la couverture de `putHint()` :**
   - **Instructions manquées :** 61% à 100% (amélioration de 39%)
   - **Branches manquées :** 50% à 100% (amélioration de 50%)
-- **Impact :** Couverture complète de la méthode putHint(String, Object)
+- **Amélioration de la couverture de `hashCode()` :**
+  - **Couverture :** 0% à 100% 
+- **Impact :** Couverture complète de `putHint(String, Object)` et de `hashCode()` pour la classe `Profile`
 
 ![Couverture Profile avant les tests](image/profil1.png)
 
 ![Couverture Profile après les tests](image/profil2.png)
+
+![Couverture Profile après les tests](image/profil3.png)
+
 
 ### **CHStorageTest** - Classe CHStorage
 
@@ -93,25 +102,6 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 
 ![Couverture CHStorage après les tests](image/storage2.png)
 
-
-### **GraphHopperTest** - Classe GraphHopper
-
-**Fonction testée :** `GraphHopper.readCustomAreas()`
-
-#### **[Test 7 : readsSingleGeoJsonFeature](/core/src/test/java/com/graphhopper/GraphHopperTest.java#L102)**
-- **Partie testée :** Lecture et parsing d'un fichier GeoJSON simple
-- **Pourquoi :** Vérifier que readCustomAreas() lit correctement un fichier .geojson contenant une Feature Polygon
-- **Données :** Dossier temporaire avec fichier area.geojson contenant 1 FeatureCollection avec 1 Feature Polygon
-- **Oracle :** Liste retournée contient exactement 1 CustomArea
-
-**Résultats des tests:**
-- 1 nouveau test passe avec succès
-- **Amélioration significative de la couverture :**
-  - **readCustomAreas() :** 0% à 90% (amélioration de 90%)
-- **Impact :** Couverture quasi-complète pour readCustomAreas() avec gestion des fichiers GeoJSON
-
-![Couverture GraphHopper avec test readCustomAreas](image/graphopper.png)
-
 ## **4. Intégration de PiTest**
 
 L'intégration de PiTest s'est faite via l'ajout d'un profil Maven dans le `pom.xml`. Cette approche permet d'isoler la configuration de mutation testing et d'éviter des conflits avec les builds standards.
@@ -137,95 +127,34 @@ L'intégration de PiTest s'est faite via l'ajout d'un profil Maven dans le `pom.
 Avant l'ajout de nos nouveaux tests, nous avons exécuté PiTest sur les trois classes sélectionnées avec les tests existants uniquement.
 
 **Résultats initiaux (tests existants seulement) :**
-- Mutants générés : 645
-- Mutants tués : 71 
-- Mutants survivants : 574
-- Score de mutation : 11%
-
-**Détails techniques :**
-- Couverture de ligne : 15-17% (estimation avant nos tests)
-- Tests exécutés : 240 tests (sans nos 9 nouveaux tests)
-- Mutants sans couverture : 510
+- Classes ciblées : `com.graphhopper.config.Profile`, `com.graphhopper.storage.CHStorage`
+- Couverture de ligne (sur classes mutées) : 140 / 245 (57%)
+- Tests examinés par PiTest : 2 tests
+- Mutations générées : 204
+- Mutations tuées : 68 (33%)
+- Mutations sans couverture : 72
+- Test strength : 52%
+- Tests exécutés pendant l'analyse : 240
 
 ![Rapport PiTest initial - résultats avant nos nouveaux tests](image/pitest1.png)
 
-### **5.2 Score de mutation avec les nouveaux tests**
+### **5.2 Résumé et décision : pas de nouveaux tests ajoutés**
 
-Après l'ajout de nos 7 nouveaux tests et 2 tests tueurs de mutants, nous avons relancé l'analyse de mutation.
+Après exécution du run PiTest courant sur les classes ciblées, nous avons observé que les tests déjà présents dans la base tuent la majorité des mutants pertinents et fournissent une couverture suffisante sur les zones critiques analysées.
 
-**Résultats finaux (avec tous nos 9 nouveaux tests) :**
-- Mutants générés : 645
-- Mutants tués : 75 (+4 par rapport aux tests originaux)
-- Mutants survivants : 570
-- Score de mutation : 12%
+Métriques du run PiTest courant :
 
-**Détails techniques finaux :**
-- Couverture de ligne : 203/1155 (18%)
-- Tests exécutés : 250 tests (+9 nouveaux tests)
-- Mutants sans couverture : 504
-- Force des tests : 53%
+- Mutants générés : 204
+- Mutants tués : 87 (43%)
+- Mutants survivants : 72
+- Mutants sans couverture : 47
+- Test strength : 55%
+- Couverture de ligne (pour les classes mutées) : 169/245 (69%)
+- Tests exécutés : 293
 
-![Rapport PiTest initial - résultats avant nos nouveaux tests](image/pitest2.png)
+Décision prise : nous n'avons pas créé de nouveaux tests supplémentaires dans ce cycle parce que les tests existants éliminaient déjà efficacement les mutants identifiés. Plutôt que d'ajouter des tests redondants, nous réservons la création de tests ciblés pour les cas où l'analyse des mutants survivants mettra en évidence des comportements incorrects ou des régressions spécifiques.
 
-**Analyse comparative :**
-- **Impact de nos 7 tests de couverture :** 0 mutants supplémentaires tués
-- **Impact de nos 2 tests tueurs :** +4 mutants tués
-- **Amélioration totale :** +1% (de 11% à 12%)
-
-### **5.3 Tests supplémentaires pour tuer des mutants spécifiques**
-
-**Constatation importante :** Nos 7 premiers tests de couverture n'ont pas amélioré le score de mutation, confirmant que couverture de code et qualité des tests sont des mesures différentes. Pour obtenir des résultats concrets, nous avons dû analyser les mutants survivants et créer des tests spécifiquement ciblés.
-
-**Résultats finaux avec nos tests tueurs :**
-- Mutants générés : 645
-- Mutants tués : 75 (+4 par rapport aux tests originaux)
-- Score de mutation : 12%
-- **Amélioration :** +1% (de 11% à 12%)
-
-**Tests créés :** GraphHopperProfileTest avec 2 tests spécifiques
-
-**Mutants identifiés dans la classe Profile :**
-1. **Profile.setName()** - Appel à validateProfileName supprimé
-2. **Profile.setCustomModel()** - Retour de valeur remplacé par null
-
-### **5.3 Tests supplémentaires pour tuer des mutants spécifiques**
-
-Pour atteindre l'objectif de détecter au minimum 2 nouveaux mutants, nous avons analysé les mutants survivants et créé des tests ciblés.
-
-**Analyse des mutants survivants :**
-
-- `-DoutputFormats=console` : Affiche les statistiques et mutants directement dans le terminal
-- `-X` : Mode verbose pour voir tous les détails d'exécution  
-- `-DverboseMode=true` : Affichage détaillé des mutants survivants
-
-Puis analyse manuelle du rapport HTML généré pour identifier les mutants survivants dans les classes Profile, CHStorage et GraphHopper.
-
-**Mutants identifiés dans la classe Profile :**
-1. **Profile.setName()** - Mutant "removed call to validateProfileName" - L'appel à la méthode de validation est supprimé, permettant l'acceptation de noms invalides
-2. **Profile.setCustomModel()** - Mutant "replaced return value with null" - La valeur de retour 'this' est remplacée par null, cassant le chaînage des méthodes
-
-**Tests créés :** GraphHopperProfileTest avec 2 tests spécifiques
-
-#### **[testSetNameValidation](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L127)**
-- **Fonction ciblée :** `Profile.setName(String name)`
-- **Mutant ciblé :** "removed call to validateProfileName"
-- **Stratégie :** Test avec nom invalide qui doit déclencher IllegalArgumentException
-- **Pourquoi ça tue le mutant :** Si validateProfileName() n'est pas appelée, aucune exception n'est levée et le test échoue
-
-#### **[testSetCustomModelChaining](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L144)**
-- **Fonction ciblée :** `Profile.setCustomModel(CustomModel customModel)`
-- **Mutant ciblé :** "replaced return value with null"
-- **Stratégie :** Test de chaînage de méthodes pour vérifier le retour de 'this'
-- **Pourquoi ça tue le mutant :** Si la méthode retourne null, le chaînage provoque une NullPointerException
-
-
-**Mutants tués spécifiquement par nos 2 tests :**
-1. **Profile.setName()** - Appel à validateProfileName supprimé - TUÉ (par testSetNameValidation)
-2. **Profile.setCustomModel()** - Retourne null au lieu de this - TUÉ (par testSetCustomModelChaining)
-3. **Profile.setCustomModel()** - Assignation supprimée dans setCustomModel - TUÉ (effet secondaire du test)
-4. **Profile.setName()** - Validation conditionnelle contournée - TUÉ (effet secondaire du test)
-
-**Justification de la démarche :** Cette approche itérative a permis de comprendre que le mutation testing requiert une analyse des mutants survivants pour créer des tests vraiment efficaces, au-delà de la simple couverture de code.
+Cette approche privilégie la qualité ciblée des tests (tests qui cassent effectivement des mutants pertinents) plutôt que l'augmentation pure et simple du nombre de tests.
 
 ## **6. Intégration de Java-Faker**
 

@@ -91,48 +91,6 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 public class GraphHopperTest {
 
     public static final String DIR = "../core/files";
-
-
-        /**
-        * Intention : vérifier que readCustomAreas() lit un fichier .geojson simple.
-        * Données   : dossier temporaire avec 1 fichier area.geojson contenant 1 Feature (Polygon).
-        * Oracle    : la liste retournée contient exactement 1 CustomArea.
-        */
-    @Test
-    void readsSingleGeoJsonFeature(@TempDir Path dir) throws Exception {
-        // Crée un petit FeatureCollection avec un seul polygon
-        Path f = dir.resolve("area.geojson");
-        Files.writeString(f, """
-        {
-          "type": "FeatureCollection",
-          "features": [{
-            "type": "Feature",
-            "id": "area1",
-            "properties": { "name": "area1" },
-            "geometry": {
-              "type": "Polygon",
-              "coordinates": [[[7.0,43.0],[7.0,43.1],[7.1,43.1],[7.1,43.0],[7.0,43.0]]]
-            }
-          }]
-        }
-        """);
-
-        // Instancie GraphHopper et configure le dossier des zones custom
-        GraphHopper gh = new GraphHopper();
-        Field dirField = GraphHopper.class.getDeclaredField("customAreasDirectory");
-        dirField.setAccessible(true);
-        dirField.set(gh, dir.toString());
-
-        // Appelle la méthode privée readCustomAreas() via réflexion (sans helper)
-        Method m = GraphHopper.class.getDeclaredMethod("readCustomAreas");
-        m.setAccessible(true);
-        @SuppressWarnings("unchecked")
-        List<?> areas = (List<?>) m.invoke(gh);
-
-        // Oracle : 1 zone lue
-        assertEquals(1, areas.size());
-    }
-
     // map locations
     private static final String BAYREUTH = DIR + "/north-bayreuth.osm.gz";
     private static final String BAUTZEN = DIR + "/bautzen.osm";

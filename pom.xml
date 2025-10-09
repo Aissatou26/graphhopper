@@ -199,7 +199,8 @@
                     <artifactId>maven-surefire-plugin</artifactId>
                     <version>2.22.2</version>
                     <configuration>
-                        <argLine>@{argLine} -Xmx190m -Xms190m -Duser.language=en</argLine>
+                        <!-- Use a fixed argLine to avoid unresolved @{argLine} placeholder problems with external tools -->
+                        <argLine>-Xmx190m -Xms190m -Duser.language=en</argLine>
                     </configuration>
                 </plugin>
 
