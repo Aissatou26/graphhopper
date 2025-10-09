@@ -24,6 +24,8 @@ import com.graphhopper.config.LMProfile;
 import com.graphhopper.config.Profile;
 import com.graphhopper.jackson.Jackson;
 import com.graphhopper.routing.TestProfiles;
+import com.graphhopper.util.CustomModel;
+
 import org.junit.jupiter.api.Test;
 
 import java.io.IOException;
@@ -35,6 +37,127 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GraphHopperProfileTest {
 
     private static final String GH_LOCATION = "target/gh-profile-config-gh";
+
+    // Profile.putHints 
+    /**
+     * Intention :
+     *   Vérifier que putHint() enregistre bien la paire (clé, valeur) dans la map des hints.
+     * Données :
+     *   - Profile p = new Profile("p1")
+     *   - Appel : p.putHint("foo", "bar")  
+     * Oracle :
+     *   - Aucune exception n'est levée (test du comportement normal)
+     */
+    @Test
+    public void profile_putHint_storeKeyValue() {
+        Profile p = new Profile("p1");
+
+        // Test que putHint() fonctionne sans lever d'exception
+        assertDoesNotThrow(() -> p.putHint("foo", "bar"));
+        
+        // Test le chaînage - putHint() doit retourner le même Profile
+        Profile result = p.putHint("another", "value");
+        assertSame(p, result, "putHint() should return the same Profile instance for method chaining");
+    }
+
+    /**
+     * Intention :
+     *   S'assurer que la clé réservée "u_turn_costs" est refusée et qu'une IllegalArgumentException est levée.
+     * Données :
+     *   - Profile p = new Profile("p1")
+     *   - Appel : p.putHint("u_turn_costs", 5)
+     * Oracle :
+     *   - L'appel lève IllegalArgumentException
+     */
+    @Test
+    public void profile_putHint_rejects() {
+        Profile p = new Profile("p1");
+
+        assertThrows(IllegalArgumentException.class, () -> p.putHint("u_turn_costs", "car"));
+    }
+
+    //Intention :
+    //  S'assurer que la clé réservée "vehicle" est refusée et qu'une IllegalArgumentException est levée.
+    //Données :
+    //  - Profile p = new Profile("p1")
+    //  - Appel : p.putHint("vehicle", "car")
+    //Oracle :
+    //  - L'appel lève IllegalArgumentException
+     
+    @Test
+    public void profile_putHint_rejectsVehicle() {
+        Profile p = new Profile("p1");
+
+        assertThrows(IllegalArgumentException.class, () -> p.putHint("vehicle", "car"));
+    }
+
+    /**
+    * Intention : vérifier que validateProfileName rejette les noms invalides
+    * Données   : noms valides (minuscules, chiffres, tirets) et invalides (majuscules, espaces, caractères spéciaux)
+    * Oracle    : IllegalArgumentException pour noms non conformes, aucune exception pour noms valides
+    */
+    @Test
+    public void profile_validateProfileName_enforcesFormat() {
+        // Test noms valides - aucune exception
+        assertDoesNotThrow(() -> Profile.validateProfileName("valid_name"));
+        assertDoesNotThrow(() -> Profile.validateProfileName("test123"));
+        assertDoesNotThrow(() -> Profile.validateProfileName("my-profile"));
+        assertDoesNotThrow(() -> Profile.validateProfileName("a"));
+    
+        // Test noms invalides - IllegalArgumentException
+        assertThrows(IllegalArgumentException.class, () -> Profile.validateProfileName("Invalid_Name")); // majuscule
+        assertThrows(IllegalArgumentException.class, () -> Profile.validateProfileName("invalid name")); // espace
+        assertThrows(IllegalArgumentException.class, () -> Profile.validateProfileName("invalid@name")); // caractère spécial
+        assertThrows(IllegalArgumentException.class, () -> Profile.validateProfileName("invalid.name")); // point
+        assertThrows(IllegalArgumentException.class, () -> Profile.validateProfileName("test/name")); // slash
+        assertThrows(IllegalArgumentException.class, () -> Profile.validateProfileName("")); // nom vide
+    }
+
+    /**
+    * Tests pour tuer des mutants spécifiques dans Profile
+    */
+
+    /**
+     * Test pour tuer le mutant "removed call to validateProfileName"
+     * Intention : Vérifier que validateProfileName() est appelée
+     * Données : Nom invalide "INVALID_NAME_WITH_UPPERCASE"
+     * Oracle : IllegalArgumentException levée
+     */
+    @Test
+    public void testSetNameValidation() {
+        Profile profile = new Profile("valid");
+        
+        assertThrows(IllegalArgumentException.class, () -> {
+            profile.setName("INVALID_NAME_WITH_UPPERCASE");
+        });
+        
+        assertEquals("valid", profile.getName());
+    }
+
+    /**
+     * Test pour tuer le mutant "replaced return value with null"
+     * Intention : Vérifier que setCustomModel() retourne 'this'
+     * Données : CustomModel valide
+     * Oracle : Retourne l'instance Profile pour chaînage
+     */
+    @Test 
+    public void testSetCustomModelChaining() {
+        Profile profile = new Profile("test");
+        CustomModel customModel = new CustomModel();
+        
+        Profile result = profile.setCustomModel(customModel);
+        
+        assertNotNull(result);
+        assertSame(profile, result);
+        
+        // Test de chaînage
+        assertDoesNotThrow(() -> {
+            new Profile("chain")
+                .setCustomModel(customModel)
+                .setName("newname");
+        });
+    }
+
 
     @Test
     public void deserialize() throws IOException {

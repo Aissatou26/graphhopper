@@ -23,22 +23,22 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 
 ## **3. Tests Créés**
 
-### **ConfigProfileLMProfileTest** - Classe Profile
+### **GraphHopperProfileTest** - Classe Profile
 **Fonction testée :** `Profile.putHint(String key, Object value)`
 
-#### **[Test 1 : profile_putHint_storeKeyValue](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/test/java/com/graphhopper/ConfigProfileLMProfileTest.java#L20)**
+#### **[Test 1 : profile_putHint_storeKeyValue](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L39)**
 - **Partie testée :** Comportement normal de stockage et chaînage des méthodes
 - **Pourquoi :** Vérifier que putHint() enregistre correctement les paires clé-valeur et retourne l'instance pour le chaînage
 - **Données :** Profile("p1"), clés "foo"/"another", valeurs "bar"/"value"
 - **Oracle :** Aucune exception levée + retour de la même instance Profile
 
-#### **[Test 2 : profile_putHint_rejects](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/test/java/com/graphhopper/ConfigProfileLMProfileTest.java#L41)**
+#### **[Test 2 : profile_putHint_rejects](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L62)**
 - **Partie testée :** Validation des clés réservées ("u_turn_costs")
 - **Pourquoi :** S'assurer que les clés réservées sont correctement rejetées
 - **Données :** Profile("p1"), clé réservée "u_turn_costs", valeur "car"
 - **Oracle :** IllegalArgumentException levée
 
-#### **[Test 3 : profile_putHint_rejectsVehicle](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/test/java/com/graphhopper/ConfigProfileLMProfileTest.java#L56)**
+#### **[Test 3 : profile_putHint_rejectsVehicle](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L77)**
 - **Partie testée :** Validation des clés réservées ("vehicle")
 - **Pourquoi :** Tester un autre cas de clé réservée pour la robustesse
 - **Données :** Profile("p1"), clé réservée "vehicle", valeur "car"
@@ -46,7 +46,7 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 
 **Fonction testée :** `Profile.validateProfileName(String name)`
 
-#### **[Test 4 : profile_validateProfileName_enforcesFormat](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/test/java/com/graphhopper/ConfigProfileLMProfileTest.java#L68)**
+#### **[Test 4 : profile_validateProfileName_enforcesFormat](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L91)**
 - **Partie testée :** Validation du format des noms de profil
 - **Pourquoi :** Vérifier que seuls les noms conformes (minuscules, chiffres, tirets) sont acceptés
 - **Données :** Noms valides (valid_name, test123, my-profile, a) et invalides (majuscules, espaces, caractères spéciaux)
@@ -68,7 +68,7 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 
 **Fonction testée :** `CHStorage.toDetailsString()`
 
-#### **[Test 5 : testToDetailsString](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/test/java/com/graphhopper/storage/CHStorageTest.java#L98)**
+#### **[Test 5 : testToDetailsString](/core/src/test/java/com/graphhopper/storage/CHStorageTest.java#L15)**
 - **Partie testée :** Génération de chaîne descriptive des statistiques de stockage
 - **Pourquoi :** Vérifier que la méthode retourne une chaîne contenant le nombre de nœuds et raccourcis
 - **Données :** CHStorage avec 5 nœuds, capacité de 10 raccourcis
@@ -76,7 +76,7 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 
 **Fonction testée :** `CHStorage.debugPrint()`
 
-#### **[Test 6 : testDebugPrintOutput](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/test/java/com/graphhopper/storage/CHStorageTest.java#L117)**
+#### **[Test 6 : testDebugPrintOutput](/core/src/test/java/com/graphhopper/storage/CHStorageTest.java#L41)**
 - **Partie testée :** Affichage de debug des sections nœuds et raccourcis
 - **Pourquoi :** S'assurer que debugPrint() affiche correctement les entêtes des tableaux
 - **Données :** CHStorage avec 3 nœuds, capacité de 5 raccourcis
@@ -94,11 +94,11 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 ![Couverture CHStorage après les tests](image/storage2.png)
 
 
-### **GraphHopperExtraTest** - Classe GraphHopper
+### **GraphHopperTest** - Classe GraphHopper
 
 **Fonction testée :** `GraphHopper.readCustomAreas()`
 
-#### **[Test 7 : readsSingleGeoJsonFeature](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/test/java/com/graphhopper/GraphHopperExtraTest.java#L20)**
+#### **[Test 7 : readsSingleGeoJsonFeature](/core/src/test/java/com/graphhopper/GraphHopperTest.java#L102)**
 - **Partie testée :** Lecture et parsing d'un fichier GeoJSON simple
 - **Pourquoi :** Vérifier que readCustomAreas() lit correctement un fichier .geojson contenant une Feature Polygon
 - **Données :** Dossier temporaire avec fichier area.geojson contenant 1 FeatureCollection avec 1 Feature Polygon
@@ -169,7 +169,7 @@ Après l'ajout de nos 7 nouveaux tests et 2 tests tueurs de mutants, nous avons 
 
 **Analyse comparative :**
 - **Impact de nos 7 tests de couverture :** 0 mutants supplémentaires tués
-- **Impact de nos 2 tests tueurs (MutantKillerProfileTest) :** +4 mutants tués
+- **Impact de nos 2 tests tueurs :** +4 mutants tués
 - **Amélioration totale :** +1% (de 11% à 12%)
 
 ### **5.3 Tests supplémentaires pour tuer des mutants spécifiques**
@@ -182,7 +182,7 @@ Après l'ajout de nos 7 nouveaux tests et 2 tests tueurs de mutants, nous avons 
 - Score de mutation : 12%
 - **Amélioration :** +1% (de 11% à 12%)
 
-**Tests créés :** MutantKillerProfileTest avec 2 tests spécifiques
+**Tests créés :** GraphHopperProfileTest avec 2 tests spécifiques
 
 **Mutants identifiés dans la classe Profile :**
 1. **Profile.setName()** - Appel à validateProfileName supprimé
@@ -204,15 +204,15 @@ Puis analyse manuelle du rapport HTML généré pour identifier les mutants surv
 1. **Profile.setName()** - Mutant "removed call to validateProfileName" - L'appel à la méthode de validation est supprimé, permettant l'acceptation de noms invalides
 2. **Profile.setCustomModel()** - Mutant "replaced return value with null" - La valeur de retour 'this' est remplacée par null, cassant le chaînage des méthodes
 
-**Tests créés :** MutantKillerProfileTest avec 2 tests spécifiques
+**Tests créés :** GraphHopperProfileTest avec 2 tests spécifiques
 
-#### **[testSetNameValidation](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/test/java/com/graphhopper/MutantKillerProfileTest.java#L20)**
+#### **[testSetNameValidation](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L127)**
 - **Fonction ciblée :** `Profile.setName(String name)`
 - **Mutant ciblé :** "removed call to validateProfileName"
 - **Stratégie :** Test avec nom invalide qui doit déclencher IllegalArgumentException
 - **Pourquoi ça tue le mutant :** Si validateProfileName() n'est pas appelée, aucune exception n'est levée et le test échoue
 
-#### **[testSetCustomModelChaining](https://github.com/Naromba/IFT3913/blob/2025/tache2/CONDE-NDIAYE/graphhopper/core/src/test/java/com/graphhopper/MutantKillerProfileTest.java#L37)**
+#### **[testSetCustomModelChaining](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L144)**
 - **Fonction ciblée :** `Profile.setCustomModel(CustomModel customModel)`
 - **Mutant ciblé :** "replaced return value with null"
 - **Stratégie :** Test de chaînage de méthodes pour vérifier le retour de 'this'

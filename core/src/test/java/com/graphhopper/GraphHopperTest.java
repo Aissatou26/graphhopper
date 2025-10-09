@@ -35,6 +35,7 @@ import com.graphhopper.storage.IntsRef;
 import com.graphhopper.storage.index.LocationIndexTree;
 import com.graphhopper.storage.index.Snap;
 import com.graphhopper.util.*;
+import com.graphhopper.util.Parameters.Algorithms.RoundTrip;
 import com.graphhopper.util.Parameters.CH;
 import com.graphhopper.util.Parameters.Landmark;
 import com.graphhopper.util.Parameters.Routing;
@@ -49,6 +50,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -56,6 +58,7 @@ import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -71,6 +74,16 @@ import static com.graphhopper.util.Parameters.Routing.TIMEOUT_MS;
 import static com.graphhopper.util.Parameters.Routing.U_TURN_COSTS;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.*;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Method;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.List;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 /**
  * @author Peter Karich
@@ -78,6 +91,47 @@ import static org.junit.jupiter.api.Assertions.*;
 public class GraphHopperTest {
 
     public static final String DIR = "../core/files";
+
+
+        /**
+        * Intention : vérifier que readCustomAreas() lit un fichier .geojson simple.
+        * Données   : dossier temporaire avec 1 fichier area.geojson contenant 1 Feature (Polygon).
+        * Oracle    : la liste retournée contient exactement 1 CustomArea.
+        */
+    @Test
+    void readsSingleGeoJsonFeature(@TempDir Path dir) throws Exception {
+        // Crée un petit FeatureCollection avec un seul polygon
+        Path f = dir.resolve("area.geojson");
+        Files.writeString(f, """
+        {
+          "type": "FeatureCollection",
+          "features": [{
+            "type": "Feature",
+            "id": "area1",
+            "properties": { "name": "area1" },
+            "geometry": {
+              "type": "Polygon",
+              "coordinates": [[[7.0,43.0],[7.0,43.1],[7.1,43.1],[7.1,43.0],[7.0,43.0]]]
+            }
+          }]
+        }
+        """);
+
+        // Instancie GraphHopper et configure le dossier des zones custom
+        GraphHopper gh = new GraphHopper();
+        Field dirField = GraphHopper.class.getDeclaredField("customAreasDirectory");
+        dirField.setAccessible(true);
+        dirField.set(gh, dir.toString());
+
+        // Appelle la méthode privée readCustomAreas() via réflexion (sans helper)
+        Method m = GraphHopper.class.getDeclaredMethod("readCustomAreas");
+        m.setAccessible(true);
+        @SuppressWarnings("unchecked")
+        List<?> areas = (List<?>) m.invoke(gh);
+
+        // Oracle : 1 zone lue
+        assertEquals(1, areas.size());
+    }
 
     // map locations
     private static final String BAYREUTH = DIR + "/north-bayreuth.osm.gz";
