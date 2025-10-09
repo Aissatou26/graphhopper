@@ -25,19 +25,19 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 ### **GraphHopperProfileTest** - Classe Profile
 **Fonction testée :** `Profile.putHint(String key, Object value)`
 
-#### **[Test 1 : profile_putHint_storeKeyValue](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L39)**
+#### **[Test 1 : profile_putHint_storeKeyValue](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L53)**
 - **Partie testée :** Comportement normal de stockage et chaînage des méthodes
 - **Pourquoi :** Vérifier que putHint() enregistre correctement les paires clé-valeur et retourne l'instance pour le chaînage
 - **Données :** Profile("p1"), clés "foo"/"another", valeurs "bar"/"value"
 - **Oracle :** Aucune exception levée + retour de la même instance Profile
 
-#### **[Test 2 : profile_putHint_rejects](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L62)**
+#### **[Test 2 : profile_putHint_rejects](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L73)**
 - **Partie testée :** Validation des clés réservées ("u_turn_costs")
 - **Pourquoi :** S'assurer que les clés réservées sont correctement rejetées
 - **Données :** Profile("p1"), clé réservée "u_turn_costs", valeur "car"
 - **Oracle :** IllegalArgumentException levée
 
-#### **[Test 3 : profile_putHint_rejectsVehicle](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L77)**
+#### **[Test 3 : profile_putHint_rejectsVehicle](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L88)**
 - **Partie testée :** Validation des clés réservées ("vehicle")
 - **Pourquoi :** Tester un autre cas de clé réservée pour la robustesse
 - **Données :** Profile("p1"), clé réservée "vehicle", valeur "car"
@@ -45,13 +45,13 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 
 **Fonction testée :** `Profile.validateProfileName(String name)`
 
-#### **[Test 4 : profile_validateProfileName_enforcesFormat](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L91)**
+#### **[Test 4 : profile_validateProfileName_enforcesFormat](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L100)**
 - **Partie testée :** Validation du format des noms de profil
 - **Pourquoi :** Vérifier que seuls les noms conformes (minuscules, chiffres, tirets) sont acceptés
 - **Données :** Noms valides (valid_name, test123, my-profile, a) et invalides (majuscules, espaces, caractères spéciaux)
 - **Oracle :** Aucune exception pour noms valides, IllegalArgumentException pour noms invalides
 
-#### **[Test 5 : profile_equalsAndHashCode](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L120)**
+#### **[Test 5 : profile_equalsAndHashCode](/core/src/test/java/com/graphhopper/GraphHopperProfileTest.java#L129)**
 - **Partie testée :** Contrat equals() / hashCode() pour la classe `Profile`
 - **Pourquoi :** S'assurer que deux Profile avec le même `name` sont considérés égaux et ont le même hashCode; vérifier aussi le comportement avec un autre nom et avec `null`.
 - **Données :** `Profile("car")`, `Profile("car")`, `Profile("bike")`
@@ -77,7 +77,7 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 
 **Fonction testée :** `CHStorage.toDetailsString()`
 
-#### **[Test 5 : testToDetailsString](/core/src/test/java/com/graphhopper/storage/CHStorageTest.java#L15)**
+#### **[Test 5 : testToDetailsString](/core/src/test/java/com/graphhopper/storage/CHStorageTest.java#L23)**
 - **Partie testée :** Génération de chaîne descriptive des statistiques de stockage
 - **Pourquoi :** Vérifier que la méthode retourne une chaîne contenant le nombre de nœuds et raccourcis
 - **Données :** CHStorage avec 5 nœuds, capacité de 10 raccourcis
@@ -85,7 +85,7 @@ Chacune possède déjà une couverture de test de base, ce qui permet d'identifi
 
 **Fonction testée :** `CHStorage.debugPrint()`
 
-#### **[Test 6 : testDebugPrintOutput](/core/src/test/java/com/graphhopper/storage/CHStorageTest.java#L41)**
+#### **[Test 6 : testDebugPrintOutput](/core/src/test/java/com/graphhopper/storage/CHStorageTest.java#L42)**
 - **Partie testée :** Affichage de debug des sections nœuds et raccourcis
 - **Pourquoi :** S'assurer que debugPrint() affiche correctement les entêtes des tableaux
 - **Données :** CHStorage avec 3 nœuds, capacité de 5 raccourcis
