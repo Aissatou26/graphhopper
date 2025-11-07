@@ -37,6 +37,7 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
 
+ # Mutation testing job
   mutation:
     name: Mutation coverage check
     needs: build
@@ -55,9 +56,10 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Run PIT mutation testing for core
-        # Run PIT explicitly against the core module pom to ensure the plugin
-        # runs in the correct module context and generates reports under core/target/pit-reports
-        run: mvn -f core/pom.xml -Ppitest org.pitest:pitest-maven:mutationCoverage -Dpitest.outputFormats=XML,HTML -Dpitest.timestampedReports=false
+        # Build the reactor but only run PIT for the core module. Using -pl core -am
+        # ensures required modules are built (so snapshot dependencies are available)
+        # while still restricting PIT to the core module.
+        run: mvn -pl core -am -Ppitest org.pitest:pitest-maven:mutationCoverage -Dpitest.outputFormats=XML,HTML -Dpitest.timestampedReports=false
       - name: Compare mutation score against baseline
         run: bash ci/check-mutation-score.sh core
 
