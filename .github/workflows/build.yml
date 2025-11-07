@@ -55,7 +55,9 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-maven-
       - name: Run PIT mutation testing for core
-        run: mvn -pl core -am -Ppitest org.pitest:pitest-maven:mutationCoverage -Dpitest.outputFormats=XML,HTML -Dpitest.timestampedReports=false
+        # Run PIT explicitly against the core module pom to ensure the plugin
+        # runs in the correct module context and generates reports under core/target/pit-reports
+        run: mvn -f core/pom.xml -Ppitest org.pitest:pitest-maven:mutationCoverage -Dpitest.outputFormats=XML,HTML -Dpitest.timestampedReports=false
       - name: Compare mutation score against baseline
         run: bash ci/check-mutation-score.sh core
 
