@@ -37,3 +37,25 @@ jobs:
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
 
+  mutation:
+    name: Mutation coverage check
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: temurin
+      - name: Cache Maven artifacts
+        uses: actions/cache@v4
+        with:
+          path: ~/.m2/repository
+          key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
+          restore-keys: |
+            ${{ runner.os }}-maven-
+      - name: Run PIT mutation testing for core
+        run: mvn -pl core -am -Ppitest org.pitest:pitest-maven:mutationCoverage -Dpitest.outputFormats=XML,HTML -Dpitest.timestampedReports=false
+      - name: Compare mutation score against baseline
+        run: bash ci/check-mutation-score.sh core
+
