@@ -55,11 +55,13 @@ jobs:
           key: ${{ runner.os }}-maven-${{ hashFiles('**/pom.xml') }}
           restore-keys: |
             ${{ runner.os }}-maven-
+      - name: Prepare core dependencies
+        # Build required modules and install snapshots so PIT can resolve dependencies
+        run: mvn -B -DskipTests -DskipITs -pl core -am install
+
       - name: Run PIT mutation testing for core
-        # Build the reactor but only run PIT for the core module. Using -pl core -am
-        # ensures required modules are built (so snapshot dependencies are available)
-        # while still restricting PIT to the core module.
-        run: mvn -pl core -am -Ppitest org.pitest:pitest-maven:mutationCoverage -Dpitest.outputFormats=XML,HTML -Dpitest.timestampedReports=false
+        # Run PIT only against the core module pom now that dependencies are installed
+        run: mvn -f core/pom.xml -Ppitest org.pitest:pitest-maven:mutationCoverage -Dpitest.outputFormats=XML,HTML -Dpitest.timestampedReports=false
       - name: Compare mutation score against baseline
         run: bash ci/check-mutation-score.sh core
 
