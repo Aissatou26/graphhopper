@@ -66,7 +66,9 @@ jobs:
 
       - name: Run PIT mutation testing for core
         # Run PIT only against the core module pom now that dependencies are installed
-        run: mvn -f core/pom.xml -Ppitest org.pitest:pitest-maven:mutationCoverage -Dpitest.outputFormats=XML,HTML -Dpitest.timestampedReports=false
+        # Pass an empty argLine to avoid PIT launching a minion with a literal ${argLine}
+        # (which leads to ClassNotFoundException: ${argLine}). See CI logs for MINION_DIED.
+        run: mvn -f core/pom.xml -Ppitest org.pitest:pitest-maven:mutationCoverage -Dpitest.outputFormats=XML,HTML -Dpitest.timestampedReports=false -DargLine=""
       - name: Upload PIT reports (always)
         if: always()
         uses: actions/upload-artifact@v4
