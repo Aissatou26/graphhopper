@@ -124,6 +124,14 @@
             <artifactId>javafaker</artifactId>
             <version>0.15</version>
         </dependency>
+
+        <!-- Ajout des dépendances  Mockito pour les tests unitaires -->
+        <dependency>
+            <groupId>org.mockito</groupId>
+            <artifactId>mockito-core</artifactId>
+            <version>5.5.0</version>
+            <scope>test</scope>
+        </dependency>
     </dependencies>
 
     <build>
@@ -151,7 +159,22 @@
             </plugins>
         </pluginManagement>
 
-        <plugins>
+                <plugins>
+                    <!--
+                    Assure que Surefire inclut la variable ${argLine} générée par d'autres plugins
+                    (par ex. JaCoCo) afin que le javaagent soit bien injecté dans la JVM de test.
+                    Sans cela, JaCoCo ne peut pas écrire `jacoco.exec` et le rapport est vide.
+                    -->
+                    <!-- Ensure Surefire uses any argLine set by other plugins (e.g. JaCoCo) -->
+                        <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <configuration>
+                    <!-- include the generated ${argLine} (jacoco) and keep the memory/user settings -->
+                    <argLine>${argLine} -Xmx190m -Xms190m -Duser.language=en</argLine>
+                </configuration>
+            </plugin>
+
             <plugin>
                 <groupId>pl.project13.maven</groupId>
                 <artifactId>git-commit-id-plugin</artifactId>
