@@ -1,5 +1,8 @@
 name: Build and Test
-on: push
+on:
+  push: {}
+  pull_request: {}
+  workflow_dispatch: {}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -62,6 +65,22 @@ jobs:
       - name: Run PIT mutation testing for core
         # Run PIT only against the core module pom now that dependencies are installed
         run: mvn -f core/pom.xml -Ppitest org.pitest:pitest-maven:mutationCoverage -Dpitest.outputFormats=XML,HTML -Dpitest.timestampedReports=false
+      - name: Upload PIT reports (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pit-reports-core
+          path: core/target/pit-reports/**
+
+      - name: Upload JaCoCo site and exec (always)
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-core
+          path: |
+            core/target/site/jacoco/**
+            core/target/jacoco.exec
+
       - name: Compare mutation score against baseline
         run: bash ci/check-mutation-score.sh core
 

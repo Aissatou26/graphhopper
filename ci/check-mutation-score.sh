@@ -1,85 +1,108 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Usage: ci/check-mutation-score.sh <module-dir>
-MODULE_DIR=${1:-core}
-REPORT_DIR="$MODULE_DIR/target/pit-reports"
-BASE_FILE="ci/mutation-baseline.txt"
-EPSILON=0.1
+# Usage: ci/check-mutation-score.sh <module>
+# Reads PIT report (XML preferred) and compares mutation score against
+# baseline in ci/mutation-baseline.txt. Exits non-zero when score < baseline - epsilon.
 
-if [ ! -d "$REPORT_DIR" ]; then
-  echo "ERROR: PIT report directory not found: $REPORT_DIR"
-  exit 2
+MODULE=${1:-}
+if [[ -z "$MODULE" ]]; then
+	echo "Usage: $0 <module>" >&2
+	exit 2
 fi
 
-INDEX_HTML="$REPORT_DIR/index.html"
-SCORE=""
+REPORT_DIR="$MODULE/target/pit-reports"
+XML_FILE="$REPORT_DIR/mutations.xml"
+HTML_INDEX="$REPORT_DIR/index.html"
+BASELINE_FILE="ci/mutation-baseline.txt"
 
-XML_REPORT="$REPORT_DIR/mutations.xml"
+EPSILON=0.1  # small tolerance (percent)
 
-# Prefer structured XML parsing: count <mutation ...> entries and those with status='KILLED'
-if [ -f "$XML_REPORT" ]; then
-  TOTAL=$(grep -c "<mutation" "$XML_REPORT" || true)
-  KILLED=$(grep -c "status=['\"]KILLED['\"]" "$XML_REPORT" || true)
-  # Defensive: if grep failed or counts are empty, fallback to HTML parsing below
-  if [ -n "$TOTAL" ] && [ "$TOTAL" -gt 0 ] 2>/dev/null; then
-    # compute percentage with one decimal
-    SCORE=$(awk -v k="$KILLED" -v t="$TOTAL" 'BEGIN{if(t==0){print "0"; exit} printf("%.1f", (k/t)*100)}') || true
-  fi
-fi
+function read_baseline() {
+	if [[ ! -f "$BASELINE_FILE" ]]; then
+		echo "ERROR: baseline file '$BASELINE_FILE' not found" >&2
+		exit 2
+	fi
+	# allow comments and whitespace
+	baseline=$(grep -Eo '^[0-9]+(\.[0-9]+)?' "$BASELINE_FILE" | head -n1 || true)
+	if [[ -z "$baseline" ]]; then
+		echo "ERROR: no numeric baseline in $BASELINE_FILE" >&2
+		exit 2
+	fi
+	printf "%s" "$baseline"
+}
 
-# If XML didn't yield a value, try targeted HTML extraction (find the Mutation Coverage column)
-if [ -z "${SCORE:-}" ] && [ -f "$INDEX_HTML" ]; then
-  # Find the header row and determine which column index contains 'Mutation Coverage'
-  # Then extract the corresponding <td> from the first data row.
-  # This is more robust than grabbing the first percent in the file.
-  HEADER_LINE=$(grep -n "<thead>" -n "$INDEX_HTML" | cut -d: -f1 2>/dev/null || true)
-  # fallback simple approach: find header positions by scanning the <th> row
-  COL_IDX=$(awk 'BEGIN{FS="<th>|</th>"}{for(i=1;i<=NF;i++) if($i ~ /Mutation Coverage/) {print i; exit}}' "$INDEX_HTML" || true)
-  if [ -n "$COL_IDX" ]; then
-    # Convert the th-field index to a td field position. The crude awk split above gives a
-    # token index; we instead parse the first <tr> inside <tbody> and pick the Nth <td>.
-    SCORE=$(awk -v col=$COL_IDX 'BEGIN{RS="<tbody"; OFS=""} NR==2{ # second record contains tbody
-      # find first <tr> ... </tr>
-      tr = $0
-      n=split(tr, parts, /<td[^>]*>/)
-      # parts[1] is the text before first td, so the first td content is in parts[2]
-      if(col+0>1 && col+0<=n) {
-        # extract content up to </td>
-        sub(/<[^"]*?>/, "", parts[col+1])
-        match(parts[col+1], /([0-9]+(\.[0-9]+)?)%/, m)
-        if(m[1]!="") print m[1]
-      }
-    }' "$INDEX_HTML" || true)
-  fi
-  # Last-resort fallback: explicit 'Mutation Coverage' label search
-  if [ -z "${SCORE:-}" ]; then
-    SCORE=$(grep -oE "Mutation[[:space:]]Coverage[^0-9%]*[0-9]+(\.[0-9]+)?%" "$INDEX_HTML" | head -n1 | grep -oE "[0-9]+(\.[0-9]+)?" ) || true
-  fi
-fi
+function parse_from_xml() {
+	if [[ ! -f "$XML_FILE" ]]; then
+		return 1
+	fi
+	# compute killed/total from mutations.xml
+	# count total mutations and killed mutations
+	total=$(grep -o "<mutation" "$XML_FILE" | wc -l || true)
+	# Accept both status="KILLED" and status='KILLED' variants
+	killed=$(grep -o "status=[\'\"]KILLED[\'\"]" "$XML_FILE" | wc -l || true)
+	if [[ -z "$total" || "$total" -eq 0 ]]; then
+		return 1
+	fi
+	# compute percentage as (killed / total) * 100 with one decimal
+	printf "%.1f" "$(awk -v k="$killed" -v t="$total" 'BEGIN{printf (k/t)*100}')"
+	return 0
+}
 
-if [ -z "$SCORE" ]; then
-  echo "ERROR: Unable to parse mutation score from $REPORT_DIR. Ensure PIT produced index.html or mutations XML." >&2
-  exit 3
-fi
+function parse_from_html() {
+	if [[ ! -f "$HTML_INDEX" ]]; then
+		return 1
+	fi
+	# attempt to find the Mutation Coverage percentage from the HTML index
+	# look for the table header 'Mutation Coverage' and capture the next numeric value
+	# fallback to a heuristic: find the first occurrence of 'Mutation Coverage' and nearby percent
+	score=$(grep -n "Mutation Coverage" -i "$HTML_INDEX" | head -n1 | cut -d: -f1 || true)
+	if [[ -n "$score" ]]; then
+		line=$(sed -n "$((score-2)),$((score+4))p" "$HTML_INDEX" | tr '\n' ' ')
+		# find a number like 41.5% or 41%
+		pct=$(echo "$line" | grep -Eo '[0-9]+(\.[0-9]+)?%' | head -n1 | tr -d '%') || true
+		if [[ -n "$pct" ]]; then
+			printf "%.1f" "$pct"
+			return 0
+		fi
+	fi
+	# final fallback: search for any 'Mutation Coverage' percentage in file
+	pct=$(grep -Eo "Mutation Coverage[^<]*[0-9]+(\.[0-9]+)?%" -i "$HTML_INDEX" | grep -Eo '[0-9]+(\.[0-9]+)?%' | head -n1 | tr -d '%' || true)
+	if [[ -n "$pct" ]]; then
+		printf "%.1f" "$pct"
+		return 0
+	fi
+	return 1
+}
 
-echo "Current mutation score: $SCORE%"
+baseline=$(read_baseline)
 
-if [ ! -f "$BASE_FILE" ]; then
-  echo "Baseline file $BASE_FILE not found. Creating it with current value ($SCORE). Please commit this file to establish a baseline." >&2
-  mkdir -p "$(dirname "$BASE_FILE")"
-  printf "%s" "$SCORE" > "$BASE_FILE"
-  exit 0
-fi
-
-BASE=$(cat "$BASE_FILE" | tr -d '\r' | tr -d '%')
-
-# Numeric comparison with epsilon
-less=$(awk -v cur="$SCORE" -v base="$BASE" -v eps="$EPSILON" 'BEGIN{if ((cur+0) + 0 < (base+0) - eps) print 1; else print 0}')
-if [ "$less" -eq 1 ]; then
-  echo "ERROR: Mutation score decreased: current=${SCORE}% < baseline=${BASE}% (epsilon=${EPSILON})" >&2
-  exit 1
+current_score=""
+if current_score=$(parse_from_xml); then
+	echo "Parsed mutation score from XML: ${current_score}%"
+elif current_score=$(parse_from_html); then
+	echo "Parsed mutation score from HTML: ${current_score}%"
 else
-  echo "Mutation score OK: current=${SCORE}% >= baseline=${BASE}% (epsilon=${EPSILON})"
-  exit 0
+	echo "ERROR: could not find PIT report (tried $XML_FILE and $HTML_INDEX)" >&2
+	exit 2
 fi
+
+# numeric compare
+cur=$(printf "%.3f" "$current_score")
+base=$(printf "%.3f" "$baseline")
+
+# compute difference = base - cur
+diff=$(awk -v b="$base" -v c="$cur" 'BEGIN{printf "%.3f", b - c}')
+
+echo "Current mutation score: ${cur}%; baseline: ${base}%; diff = ${diff}%"
+
+# fail if current < baseline - EPSILON
+cmp=$(awk -v d="$diff" -v e="$EPSILON" 'BEGIN{print (d > e) ? 1 : 0}')
+if [[ "$cmp" -eq 1 ]]; then
+	echo "ERROR: Mutation score decreased: current=${cur}% < baseline=${base}% (epsilon=${EPSILON})" >&2
+	exit 1
+else
+	echo "Mutation score OK (no regression beyond epsilon=${EPSILON})." >&2
+	exit 0
+fi
+
