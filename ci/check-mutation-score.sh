@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 set -euo pipefail
 
 # Usage: ci/check-mutation-score.sh <module>
@@ -39,11 +38,13 @@ function parse_from_xml() {
 	# compute killed/total from mutations.xml
 	# count total mutations and killed mutations
 	total=$(grep -o "<mutation" "$XML_FILE" | wc -l || true)
+
 	# Accept both status="KILLED" and status='KILLED' variants
 	killed=$(grep -o "status=[\'\"]KILLED[\'\"]" "$XML_FILE" | wc -l || true)
 	if [[ -z "$total" || "$total" -eq 0 ]]; then
 		return 1
 	fi
+	
 	# compute percentage as (killed / total) * 100 with one decimal
 	printf "%.1f" "$(awk -v k="$killed" -v t="$total" 'BEGIN{printf (k/t)*100}')"
 	return 0
