@@ -1,0 +1,24 @@
+name: 'Rickroll on Test Failure'
+description: 'Adds a humorous rickroll when tests fail'
+author: 'GraphHopper Team'
+
+runs:
+  using: 'composite'
+  steps:
+    - name:  You got rickrolled! 
+      shell: bash
+      run: |
+        echo "╔════════════════════════════════════════════════════════════════╗"
+        echo "║                      TESTS FAILED - RICKROLL                   ║"
+        echo "║                                                                ║"
+        echo "║    Never gonna give you up                                     ║"
+        echo "║    Never gonna let you down                                    ║"
+        echo "║    Never gonna run around and desert you...                    ║"
+        echo "║                                                                ║"
+        echo "║    https://www.youtube.com/watch?v=dQw4w9WgXcQ                 ║"
+        echo "╚════════════════════════════════════════════════════════════════╝"
+        echo ""
+        echo "Your tests have failed, but at least you got rickrolled! "
+        echo ""
+        echo "Remember: Every great developer gets rickrolled from time to time."
+        echo "Now go fix those bugs! "
