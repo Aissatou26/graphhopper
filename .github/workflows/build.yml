@@ -41,7 +41,7 @@ jobs:
             ${{ runner.os}}-node_modules-
       - name: Build ${{ matrix.java-version }}
         run: mvn -B clean test
-      - name: 🎬 Rickroll on failure
+      - name: Rickroll on failure
         if: failure()
         uses: ./.github/actions/rickroll-on-failure
 
@@ -90,7 +90,7 @@ jobs:
 
       - name: Compare mutation score against baseline
         run: bash ci/check-mutation-score.sh core
-      - name: 🎬 Rickroll on mutation failure
+      - name:  Rickroll on mutation failure
         if: failure()
         uses: ./.github/actions/rickroll-on-failure
 

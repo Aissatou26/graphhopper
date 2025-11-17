@@ -144,12 +144,78 @@ Cette correction à suffi; le parseur XML élimine toute fragilité liée au for
 
 - Parsing XML : rendre le parsing robuste en acceptant `status='KILLED'` et `status="KILLED"` (ex. `grep -o "status=[\\'\"]KILLED[\\'\"]"`) ou utiliser `xmlstarlet`/`xmllint` pour compter les mutations tuées.
 
-- Tests lourds : moquer les accès bas‑niveau (`DataAccess`, `Directory`) et simuler en mémoire pour garder les nouveaux tests rapides et déterministes.
+- Tests lourds : mocker les accès bas‑niveau (`DataAccess`, `Directory`) et simuler en mémoire pour garder les nouveaux tests rapides et déterministes.
 
 ## Validation
 
 - PIT local : run OK après `-DargLine=""`, sortie : "Generated 204 mutations Killed 85 (42%)".
 - Script checker : après correction du parsing, le script renvoie le score correctement (42% >= baseline 40%).
+
+
+# 3 - Ajout de Rickroll lors d'échecs de tests
+
+## Objectif
+
+Ajouter un élément d'humour dans la suite de test de GraphHopper : afficher un rickroll (avec liens et ASCII art) quand un cas de test échoue, via une GitHub Action réutilisable.
+
+## Actions réalisées
+
+### 1. Création de l'action réutilisable
+
+**Fichier créé** : [.github/actions/rickroll-on-failure/action.yml](https://github.com/Aissatou26/graphhopper/blob/master/.github/actions/rickroll-on-failure/action.yml)
+
+- **Rôle** : action composée (`composite`) qui affiche un message humoristique avec rickroll ASCII art et le lien emblématique vers la chanson de Rick Astley.
+- **Déclenchement** : s'exécute uniquement si l'étape précédente échoue (condition `if: failure()`).
+- **Contenu** :
+  - Encadré ASCII art avec message humoristique
+  - Lien vers `https://www.youtube.com/watch?v=dQw4w9WgXcQ` (rickroll classique)
+  - Messages de motivation pour les devs ("Now go fix those bugs!")
+
+### 2. Intégration dans le workflow CI
+
+**Fichier modifié** : [.github/workflows/build.yml](https://github.com/Aissatou26/graphhopper/blob/master/.github/workflows/build.yml)
+
+- **Deux points d'intégration** :
+  
+  1. **Job `build`** (après `mvn -B clean test`) :
+    
+     - name:  Rickroll on failure
+       if: failure()
+       uses: ./.github/actions/rickroll-on-failure
+    
+  
+  2. **Job `mutation`** (après `bash ci/check-mutation-score.sh core`) :
+    
+     - name:  Rickroll on mutation failure
+       if: failure()
+       uses: ./.github/actions/rickroll-on-failure
+    
+
+### 3. Comportement
+
+- **Quand les tests réussissent** : rien ne se passe, le workflow se termine normalement.
+- **Quand un test échoue** : le rickroll s'affiche dans les logs GitHub Actions avec le message humoristique et le lien YouTube.
+- **Quand PIT détecte une régression** : le rickroll s'affiche également pour le job de mutation testing.
+
+## Fichiers modifiés/créés
+
+
+| [.github/actions/rickroll-on-failure/action.yml](https://github.com/Aissatou26/graphhopper/blob/master/.github/actions/rickroll-on-failure/action.yml) | Créé | Action réutilisable avec message rickroll |
+| [.github/workflows/build.yml](https://github.com/Aissatou26/graphhopper/blob/master/.github/workflows/build.yml) |  Modifié | Intégration des 2 étapes rickroll (build + mutation) |
+
+## Avantages
+
+ **Léger** : pas de dépendances externes, simple bash  
+ **Réutilisable** : action composée, peut être utilisée dans d'autres workflows  
+ **Humoristique** : élément de détente pour les développeurs  
+ **Non-intrusif** : n'interfère pas avec le reste de la CI/CD  
+ **Visible** : affichage dans les logs GitHub Actions accessibles à tous  
+
+## Validation
+
+- Structure validée : action.yml conforme aux standards GitHub Actions
+- Intégration testée : workflow YAML syntaxiquement correct
+- Déclenchement : `if: failure()` garantit l'exécution uniquement en cas d'échec
 
 
 
